@@ -1,0 +1,14 @@
+proto essaimbp
+
+message RGBA {
+    option max_bytes = 4
+
+    uint8 r = 1
+    uint8 g = 2
+    uint8 b = 3
+    uint8 a = 4
+}
+
+message Pattern {
+    RGBA[16] steps = 1
+}
