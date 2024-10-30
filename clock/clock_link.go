@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/antoi-ne/al"
+	"essaim.dev/al"
 )
 
 type LinkClock struct {

@@ -1,9 +1,9 @@
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20221208032759-85de2813cf6b h1:a26Bdkl2B9PmYN6vGXnnfB2UGKjz0Moif1aEg+xTd7M=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20221208032759-85de2813cf6b/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
+essaim.dev/al v0.0.0-20241030113037-31916abda4dc h1:jD1dR4/cgU0OvqYomuo2PMZctu8Phu7ane0R2ZATqtA=
+essaim.dev/al v0.0.0-20241030113037-31916abda4dc/go.mod h1:ARcAlcW3w7QYgF3oLFa7dbTk1UixhFL+Oi02YerCueo=
 essaim.dev/mikro v0.2.1-0.20241025213823-21cf7ba51436 h1:wkjBza4dQWJAyb9Uu6biaik5a+TeEglQto3Mas+wkUM=
 essaim.dev/mikro v0.2.1-0.20241025213823-21cf7ba51436/go.mod h1:aAvChBp7av+o7H/R4VXqYIvMny+SNw7TarAJ0785wnI=
-github.com/antoi-ne/al v0.1.0 h1:3yx0AR+LrMdzfg5CPqpeWJOxDZuE+o1/MCfV1w0n97I=
-github.com/antoi-ne/al v0.1.0/go.mod h1:DSzJMMDtr/X5xjmUP3yG539+ysdtxWM3iV4slO7B5Hs=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20231223183121-56fa3ac82ce7 h1:7tf/0aw5DxRQjr7WaNqgtjidub6v21L2cogKIbMcTYw=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20231223183121-56fa3ac82ce7/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
 github.com/hit9/bitproto/lib/go v0.0.0-20240710011615-fe54415aecdd h1:mf90gCnFIzOgzt53unyEJxl1q3wEs7g32DTLWpfbz9s=
