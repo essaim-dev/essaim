@@ -24,7 +24,8 @@ type Client struct {
 }
 
 func NewClient(addr netip.AddrPort) (*Client, error) {
-	conn, err := net.ListenMulticastUDP("udp4", nil, net.UDPAddrFromAddrPort(addr))
+	conn, err := net.ListenUDP("udp4", net.UDPAddrFromAddrPort(addr))
+	// conn, err := net.ListenMulticastUDP("udp4", nil, net.UDPAddrFromAddrPort(addr))
 	if err != nil {
 		return nil, fmt.Errorf("could not listen on multicast address: %w", err)
 	}
