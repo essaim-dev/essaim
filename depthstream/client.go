@@ -99,7 +99,6 @@ func binaryImageToRGBA(binaryImage []byte, col color.Color) []byte {
 		}
 	}
 
-	fmt.Println("lenrgba ", len(rgba), count)
 	return rgba
 }
 
@@ -156,6 +155,5 @@ func ConvertBitsToRGBA(bits []byte, width int, col color.Color) *image.RGBA {
 		}
 	}
 
-	fmt.Println("cccc ", count)
 	return img
 }
