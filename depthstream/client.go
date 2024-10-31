@@ -58,6 +58,7 @@ func (c *Client) Run(ctx context.Context) error {
 			if err != nil && errors.Is(err, io.EOF) {
 				return fmt.Errorf("connection closed: %w", err)
 			}
+			fmt.Println(n)
 			// decoded, err := c.decoder.DecodeAll(b[:n], make([]byte, 0, binaryImageSize))
 			// if err != nil {
 			// 	fmt.Printf("could not decole recieved frame: %s", err)
