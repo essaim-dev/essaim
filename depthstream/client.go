@@ -59,7 +59,6 @@ func (c *Client) Run(ctx context.Context) error {
 			if err != nil && errors.Is(err, io.EOF) {
 				return fmt.Errorf("connection closed: %w", err)
 			}
-			fmt.Println(n)
 			// decoded, err := c.decoder.DecodeAll(b[:n], make([]byte, 0, binaryImageSize))
 			// if err != nil {
 			// 	fmt.Printf("could not decole recieved frame: %s", err)
@@ -76,10 +75,10 @@ func (c *Client) RenderImage(col color.Color) *image.RGBA {
 	// img := image.NewRGBA(image.Rect(0, 0, 640, 480))
 
 	c.binaryImageMu.RLock()
-	img := ConvertBitsToRGBA(c.binaryImage, 640)
+	img := ConvertBitsToRGBA(c.binaryImage, 640, col)
 	c.binaryImageMu.RUnlock()
 
-	return img
+	return flipVertical(img)
 }
 
 func binaryImageToRGBA(binaryImage []byte, col color.Color) []byte {
@@ -104,29 +103,28 @@ func binaryImageToRGBA(binaryImage []byte, col color.Color) []byte {
 	return rgba
 }
 
-// HorizontalFlip flips the given RGBA image horizontally.
-func HorizontalFlip(img *image.RGBA) *image.RGBA {
-	// Get the bounds of the image
+func flipVertical(img *image.RGBA) *image.RGBA {
 	bounds := img.Bounds()
 	width, height := bounds.Dx(), bounds.Dy()
 
-	// Create a new RGBA image to store the result
-	flippedImg := image.NewRGBA(bounds)
+	// Create a new image to store the flipped version
+	flipped := image.NewRGBA(bounds)
 
-	// Copy pixels from the original image to the flipped image
+	// Copy pixels from img to flipped in vertical flipped order
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			// Copy pixel from the original image in reverse x order
-			originalPixel := img.At(x, y)
-			flippedImg.Set(width-1-x, y, originalPixel)
+			// Copy pixel from (x, y) to (x, height - y - 1)
+			flipped.Set(x, height-y-1, img.At(x, y))
 		}
 	}
 
-	return flippedImg
+	return flipped
 }
 
 // ConvertBitsToRGBA converts a byte slice into an RGBA byte slice.
-func ConvertBitsToRGBA(bits []byte, width int) *image.RGBA {
+func ConvertBitsToRGBA(bits []byte, width int, col color.Color) *image.RGBA {
+	rgbaCol, _ := color.RGBAModel.Convert(col).(color.RGBA)
+
 	// Determine the height based on the width and total number of bits.
 	totalBits := len(bits) * 8
 	height := (totalBits + width - 1) / width // Ceiling division
@@ -151,9 +149,9 @@ func ConvertBitsToRGBA(bits []byte, width int) *image.RGBA {
 			// Extract the bit (0 or 1).
 			if (b & (1 << (7 - j))) != 0 {
 				count++
-				img.Set(x, y, color.RGBA{0xFF, 0xFF, 0xFF, 0xFF}) // White for bit 1
+				img.Set(x, y, rgbaCol) // White for bit 1
 			} else {
-				img.Set(x, y, color.RGBA{0xFF, 0xFF, 0x00, 0xFF}) // Black for bit 0
+				img.Set(x, y, color.RGBA{0x00, 0x00, 0x00, 0xFF}) // Black for bit 0
 			}
 		}
 	}
