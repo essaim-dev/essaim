@@ -113,13 +113,15 @@ func (s *Server) depthToBinaryImage(depth []uint16) []byte {
 	s.depthThresholdMu.RLock()
 	defer s.depthThresholdMu.RUnlock()
 
+	count := 0
 	for idx, value := range depth {
 		if value > s.depthThreshold {
 			continue // Depth is further than threshold, pixel stays off.
 		}
-		fmt.Println("aaaa")
+		count++
 		output[idx/8] |= (1 << idx % 8)
-	}
 
+		
+		fmt.Println("count ", count)
 	return output
 }

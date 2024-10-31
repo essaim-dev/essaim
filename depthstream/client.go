@@ -87,9 +87,11 @@ func binaryImageToRGBA(binaryImage []byte, col color.Color) []byte {
 
 	rgba := make([]byte, 0, len(binaryImage)*8*4)
 
+	count := 0
 	for _, b := range binaryImage {
 		for i := 7; i >= 0; i-- {
 			if ((b >> i) & 1) > 0 {
+				count++
 				rgba = append(rgba, rgbaCol.R, rgbaCol.G, rgbaCol.B, byte(255))
 			} else {
 				rgba = append(rgba, byte(0), byte(0), byte(0), byte(255))
@@ -97,7 +99,7 @@ func binaryImageToRGBA(binaryImage []byte, col color.Color) []byte {
 		}
 	}
 
-	// fmt.Println("lenrgba ", len(rgba))
+	fmt.Println("lenrgba ", len(rgba), count)
 	return rgba
 }
 
