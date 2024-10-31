@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"image"
 	"log"
 	"net/netip"
 
@@ -68,3 +69,21 @@ func main() {
 // func render(img *image.RGBA, c color.Color) {
 // 	draw.Draw(img, img.Bounds(), image.NewUniform(c), image.Point{}, draw.Src)
 // }
+
+func flipVertical(img *image.RGBA) *image.RGBA {
+	bounds := img.Bounds()
+	width, height := bounds.Dx(), bounds.Dy()
+
+	// Create a new image to store the flipped version
+	flipped := image.NewRGBA(bounds)
+
+	// Copy pixels from img to flipped in vertical flipped order
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			// Copy pixel from (x, y) to (x, height - y - 1)
+			flipped.Set(x, height-y-1, img.At(x, y))
+		}
+	}
+
+	return flipped
+}

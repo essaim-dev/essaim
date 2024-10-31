@@ -102,7 +102,7 @@ func (r *Renderer) RenderImage(c color.Color) *image.RGBA {
 
 	// draw.Draw(img, depthImg.Bounds(), depthImg, image.Point{}, draw.Over)
 
-	return HorizontalFlip(depthImg)
+	return flipVertical(depthImg)
 }
 
 func rgbToRGBA(rgb []byte) []byte {
@@ -133,6 +133,24 @@ func depthToRGBA(depth []uint16, c color.Color) []byte {
 	}
 
 	return rgba
+}
+
+func flipVertical(img *image.RGBA) *image.RGBA {
+	bounds := img.Bounds()
+	width, height := bounds.Dx(), bounds.Dy()
+
+	// Create a new image to store the flipped version
+	flipped := image.NewRGBA(bounds)
+
+	// Copy pixels from img to flipped in vertical flipped order
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			// Copy pixel from (x, y) to (x, height - y - 1)
+			flipped.Set(x, height-y-1, img.At(x, y))
+		}
+	}
+
+	return flipped
 }
 
 func scaleTo255(value uint16) uint8 {
