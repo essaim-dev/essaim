@@ -33,7 +33,7 @@ func NewServer(addr netip.AddrPort) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not dial udp address: %w", err)
 	}
-	conn.SetWriteBuffer(binaryImageSize)
+	// conn.SetWriteBuffer(binaryImageSize)
 
 	fctx, err := freenect.NewContext()
 	if err != nil {

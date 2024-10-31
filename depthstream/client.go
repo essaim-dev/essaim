@@ -28,7 +28,7 @@ func NewClient(addr netip.AddrPort) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not listen on multicast address: %w", err)
 	}
-	conn.SetReadBuffer(binaryImageSize)
+	// conn.SetReadBuffer(binaryImageSize)
 
 	decoder, err := zstd.NewReader(nil)
 	if err != nil {
