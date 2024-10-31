@@ -33,7 +33,7 @@ func NewServer(addr netip.AddrPort) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not dial udp address: %w", err)
 	}
-	conn.SetWriteBuffer(binaryImageSize)
+	conn.SetWriteBuffer(binaryImageSize + 100)
 
 	fctx, err := freenect.NewContext()
 	if err != nil {
@@ -117,6 +117,7 @@ func (s *Server) depthToBinaryImage(depth []uint16) []byte {
 		if value > s.depthThreshold {
 			continue // Depth is further than threshold, pixel stays off.
 		}
+		fmt.Println("aaaa")
 		output[idx/8] |= (1 << idx % 8)
 	}
 
