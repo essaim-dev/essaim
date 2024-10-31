@@ -29,7 +29,7 @@ func NewClient(addr netip.AddrPort) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not listen on multicast address: %w", err)
 	}
-	conn.SetReadBuffer(binaryImageSize)
+	conn.SetReadBuffer(binaryImageSize + 1000)
 
 	decoder, err := zstd.NewReader(nil)
 	if err != nil {
@@ -55,7 +55,7 @@ func (c *Client) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return fmt.Errorf("context canceled: %w", ctx.Err())
 		default:
-			n, err := c.conn.Read(b)
+			n, _, err := c.conn.ReadFromUDP(b)
 			if err != nil && errors.Is(err, io.EOF) {
 				return fmt.Errorf("connection closed: %w", err)
 			}
@@ -89,14 +89,15 @@ func binaryImageToRGBA(binaryImage []byte, col color.Color) []byte {
 
 	for _, b := range binaryImage {
 		for i := 7; i >= 0; i-- {
-			if (b>>i)&1 == 1 {
-				rgba = append(rgba, rgbaCol.R, rgbaCol.G, rgbaCol.B, 255)
+			if ((b >> i) & 1) > 0 {
+				rgba = append(rgba, rgbaCol.R, rgbaCol.G, rgbaCol.B, byte(255))
 			} else {
-				rgba = append(rgba, 0, 0, 0, 255)
+				rgba = append(rgba, byte(0), byte(0), byte(0), byte(255))
 			}
 		}
 	}
 
+	// fmt.Println("lenrgba ", len(rgba))
 	return rgba
 }
 

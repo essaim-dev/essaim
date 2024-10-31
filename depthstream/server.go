@@ -58,7 +58,7 @@ func NewServer(addr netip.AddrPort) (*Server, error) {
 		conn:           conn,
 		kinectCtx:      &fctx,
 		kinectDevice:   &device,
-		depthThreshold: 1000,
+		depthThreshold: 2000,
 		encoder:        encoder,
 	}, nil
 }
