@@ -105,6 +105,7 @@ func (s *Server) depthCallback(device *freenect.Device, depth []uint16, timestam
 	if n, err := s.conn.Write(binaryImage); err != nil {
 		fmt.Println(n, err)
 	}
+	fmt.Println("write")
 }
 
 func (s *Server) depthToBinaryImage(depth []uint16) []byte {
