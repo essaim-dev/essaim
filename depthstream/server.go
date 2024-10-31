@@ -82,7 +82,7 @@ func (s *Server) Run(ctx context.Context) error {
 		return fmt.Errorf("could not set kinect led: %w", err)
 	}
 
-	if err := s.kinectDevice.StartDepthStream(freenect.ResolutionHigh, freenect.DepthFormatMM); err != nil {
+	if err := s.kinectDevice.StartDepthStream(freenect.ResolutionMedium, freenect.DepthFormatMM); err != nil {
 		return fmt.Errorf("could not start kinect depth stream: %w", err)
 	}
 
