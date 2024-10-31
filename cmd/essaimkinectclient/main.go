@@ -20,7 +20,7 @@ var (
 
 func init() {
 	flag.StringVar(&addrFlag, "addr", "224.19.29.39:4242", "ip address and port used to send instructions")
-	flag.StringVar(&streamAddrFlag, "stream-addr", "224.19.29.39:4242", "ip address and port used to send instructions")
+	flag.StringVar(&streamAddrFlag, "stream-addr", "224.19.29.39:4243", "ip address and port used to send instructions")
 }
 
 func main() {
