@@ -16,6 +16,7 @@ require (
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20231223183121-56fa3ac82ce7 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
 	github.com/karalabe/hid v1.0.1-0.20240919124526-821c38d2678e // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	golang.org/x/image v0.14.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 )

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/draw"
 	"log"
 	"sync"
 
@@ -16,8 +15,8 @@ type Renderer struct {
 	fctx   *freenect.Context
 	device *freenect.Device
 
-	video   []uint8
-	videoMu sync.RWMutex
+	// video   []uint8
+	// videoMu sync.RWMutex
 
 	depth   []uint16
 	depthMu sync.RWMutex
@@ -40,7 +39,6 @@ func NewClient() (*Renderer, error) {
 		fctx:   &fctx,
 		device: &device,
 	}, nil
-
 }
 
 func (r *Renderer) Close() error {
@@ -49,12 +47,12 @@ func (r *Renderer) Close() error {
 	return r.fctx.Destroy()
 }
 
-func (r *Renderer) videoFunc(device *freenect.Device, video []byte, timestamp uint32) {
-	r.videoMu.Lock()
-	defer r.videoMu.Unlock()
+// func (r *Renderer) videoFunc(device *freenect.Device, video []byte, timestamp uint32) {
+// 	r.videoMu.Lock()
+// 	defer r.videoMu.Unlock()
 
-	r.video = video
-}
+// 	r.video = video
+// }
 
 func (r *Renderer) depthFunc(device *freenect.Device, depth []uint16, timestamp uint32) {
 	r.depthMu.Lock()
@@ -64,13 +62,13 @@ func (r *Renderer) depthFunc(device *freenect.Device, depth []uint16, timestamp 
 }
 
 func (r *Renderer) Run(ctx context.Context) error {
-	r.device.SetVideoCallback(r.videoFunc)
+	// r.device.SetVideoCallback(r.videoFunc)
 	r.device.SetDepthCallback(r.depthFunc)
 
-	if err := r.device.StartVideoStream(freenect.ResolutionMedium, freenect.VideoFormatRGB); err != nil {
-		return fmt.Errorf("could not start video stream: %w", err)
-	}
-	defer r.device.StopVideoStream()
+	// if err := r.device.StartVideoStream(freenect.ResolutionMedium, freenect.VideoFormatRGB); err != nil {
+	// 	return fmt.Errorf("could not start video stream: %w", err)
+	// }
+	// defer r.device.StopVideoStream()
 
 	if err := r.device.StartDepthStream(freenect.ResolutionMedium, freenect.DepthFormatMM); err != nil {
 		return fmt.Errorf("could not start video stream: %w", err)
@@ -91,20 +89,20 @@ func (r *Renderer) Run(ctx context.Context) error {
 }
 
 func (r *Renderer) RenderImage(c color.Color) *image.RGBA {
-	img := image.NewRGBA(image.Rect(0, 0, 640, 480))
+	// img := image.NewRGBA(image.Rect(0, 0, 640, 480))
 
-	r.videoMu.RLock()
-	copy(img.Pix, rgbToRGBA(r.video))
-	r.videoMu.RUnlock()
+	// r.videoMu.RLock()
+	// copy(img.Pix, rgbToRGBA(r.video))
+	// r.videoMu.RUnlock()
 
 	depthImg := image.NewRGBA(image.Rect(0, 0, 640, 480))
 	r.depthMu.RLock()
 	copy(depthImg.Pix, depthToRGBA(r.depth, c))
 	r.depthMu.RUnlock()
 
-	draw.Draw(img, depthImg.Bounds(), depthImg, image.Point{}, draw.Over)
+	// draw.Draw(img, depthImg.Bounds(), depthImg, image.Point{}, draw.Over)
 
-	return img
+	return HorizontalFlip(depthImg)
 }
 
 func rgbToRGBA(rgb []byte) []byte {
@@ -122,11 +120,10 @@ func rgbToRGBA(rgb []byte) []byte {
 }
 
 func depthToRGBA(depth []uint16, c color.Color) []byte {
+	rgbaCol, _ := color.RGBAModel.Convert(c).(color.RGBA)
+
 	rgba := make([]byte, 0, (len(depth)))
-
 	for _, d := range depth {
-		rgbaCol, _ := color.RGBAModel.Convert(c).(color.RGBA)
-
 		scaledDepth := scaleTo255(d)
 		if scaledDepth == 0 || isBlack(rgbaCol) {
 			rgba = append(rgba, byte(0), byte(0), byte(0), byte(0))
@@ -160,4 +157,25 @@ func scaleTo255(value uint16) uint8 {
 func isBlack(c color.Color) bool {
 	r, g, b, _ := c.RGBA()
 	return r == 0 && g == 0 && b == 0
+}
+
+// HorizontalFlip flips the given RGBA image horizontally.
+func HorizontalFlip(img *image.RGBA) *image.RGBA {
+	// Get the bounds of the image
+	bounds := img.Bounds()
+	width, height := bounds.Dx(), bounds.Dy()
+
+	// Create a new RGBA image to store the result
+	flippedImg := image.NewRGBA(bounds)
+
+	// Copy pixels from the original image to the flipped image
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			// Copy pixel from the original image in reverse x order
+			originalPixel := img.At(x, y)
+			flippedImg.Set(width-1-x, y, originalPixel)
+		}
+	}
+
+	return flippedImg
 }
