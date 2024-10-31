@@ -120,8 +120,9 @@ func (s *Server) depthToBinaryImage(depth []uint16) []byte {
 		}
 		count++
 		output[idx/8] |= (1 << idx % 8)
+	}
 
-		
-		fmt.Println("count ", count)
+	fmt.Println("count ", count)
+
 	return output
 }
