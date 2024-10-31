@@ -100,9 +100,9 @@ func (s *Server) Run(ctx context.Context) error {
 func (s *Server) depthCallback(device *freenect.Device, depth []uint16, timestamp uint32) {
 	binaryImage := s.depthToBinaryImage(depth)
 
-	encoded := s.encoder.EncodeAll(binaryImage, make([]byte, 0, len(binaryImage)))
+	// encoded := s.encoder.EncodeAll(binaryImage, make([]byte, 0, len(binaryImage)))
 
-	s.conn.Write(encoded)
+	s.conn.Write(binaryImage)
 }
 
 func (s *Server) depthToBinaryImage(depth []uint16) []byte {
