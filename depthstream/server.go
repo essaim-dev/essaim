@@ -98,7 +98,7 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 func (s *Server) depthCallback(device *freenect.Device, depth []uint16, timestamp uint32) {
-	binaryImage := s.depthToBinaryImage(depth)
+	binaryImage := s.reduceToOneBitPerByte(depth)
 
 	// encoded := s.encoder.EncodeAll(binaryImage, make([]byte, 0, len(binaryImage)))
 
@@ -124,5 +124,22 @@ func (s *Server) depthToBinaryImage(depth []uint16) []byte {
 
 	fmt.Println("count ", count)
 
+	return output
+}
+
+func (s *Server) reduceToOneBitPerByte(depth []uint16) []byte {
+
+	// Calculate the length of the output slice
+	outputLen := (len(depth) + 7) / 8 // Round up to account for partial byte
+	output := make([]byte, outputLen)
+
+	// Iterate over each byte in the input
+	for i, b := range depth {
+
+		if b < s.depthThreshold {
+			// Set the bit in the output slice
+			output[i/8] |= 1 << (7 - uint(i%8))
+		}
+	}
 	return output
 }
