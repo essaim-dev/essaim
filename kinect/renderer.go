@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/draw"
 	"log"
 	"sync"
 
@@ -15,8 +16,8 @@ type Renderer struct {
 	fctx   *freenect.Context
 	device *freenect.Device
 
-	// video   []uint8
-	// videoMu sync.RWMutex
+	video   []uint8
+	videoMu sync.RWMutex
 
 	depth   []uint16
 	depthMu sync.RWMutex
@@ -47,12 +48,12 @@ func (r *Renderer) Close() error {
 	return r.fctx.Destroy()
 }
 
-// func (r *Renderer) videoFunc(device *freenect.Device, video []byte, timestamp uint32) {
-// 	r.videoMu.Lock()
-// 	defer r.videoMu.Unlock()
+func (r *Renderer) videoFunc(device *freenect.Device, video []byte, timestamp uint32) {
+	r.videoMu.Lock()
+	defer r.videoMu.Unlock()
 
-// 	r.video = video
-// }
+	r.video = video
+}
 
 func (r *Renderer) depthFunc(device *freenect.Device, depth []uint16, timestamp uint32) {
 	r.depthMu.Lock()
@@ -62,13 +63,13 @@ func (r *Renderer) depthFunc(device *freenect.Device, depth []uint16, timestamp 
 }
 
 func (r *Renderer) Run(ctx context.Context) error {
-	// r.device.SetVideoCallback(r.videoFunc)
+	r.device.SetVideoCallback(r.videoFunc)
 	r.device.SetDepthCallback(r.depthFunc)
 
-	// if err := r.device.StartVideoStream(freenect.ResolutionMedium, freenect.VideoFormatRGB); err != nil {
-	// 	return fmt.Errorf("could not start video stream: %w", err)
-	// }
-	// defer r.device.StopVideoStream()
+	if err := r.device.StartVideoStream(freenect.ResolutionMedium, freenect.VideoFormatRGB); err != nil {
+		return fmt.Errorf("could not start video stream: %w", err)
+	}
+	defer r.device.StopVideoStream()
 
 	if err := r.device.StartDepthStream(freenect.ResolutionMedium, freenect.DepthFormatMM); err != nil {
 		return fmt.Errorf("could not start video stream: %w", err)
@@ -89,18 +90,18 @@ func (r *Renderer) Run(ctx context.Context) error {
 }
 
 func (r *Renderer) RenderImage(c color.Color) *image.RGBA {
-	// img := image.NewRGBA(image.Rect(0, 0, 640, 480))
+	img := image.NewRGBA(image.Rect(0, 0, 640, 480))
 
-	// r.videoMu.RLock()
-	// copy(img.Pix, rgbToRGBA(r.video))
-	// r.videoMu.RUnlock()
+	r.videoMu.RLock()
+	copy(img.Pix, rgbToRGBA(r.video))
+	r.videoMu.RUnlock()
 
 	depthImg := image.NewRGBA(image.Rect(0, 0, 640, 480))
 	r.depthMu.RLock()
 	copy(depthImg.Pix, depthToRGBA(r.depth, c))
 	r.depthMu.RUnlock()
 
-	// draw.Draw(img, depthImg.Bounds(), depthImg, image.Point{}, draw.Over)
+	draw.Draw(img, depthImg.Bounds(), depthImg, image.Point{}, draw.Over)
 
 	return flipVertical(depthImg)
 }
