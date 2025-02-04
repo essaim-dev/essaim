@@ -126,6 +126,7 @@ func NewController(clock clock.Clock, stepCount int, addr netip.AddrPort) (*Cont
 	if err != nil {
 		return nil, fmt.Errorf("could not dial udp address: %w", err)
 	}
+	conn.SetReadBuffer(512)
 
 	return &Controller{
 		clock:         clock,
@@ -149,22 +150,24 @@ func (c *Controller) Run(ctx context.Context) error {
 	c.device.SetOnButtonFunc(c.onButtonPressed)
 	c.device.SetOnPadFunc(c.onPadPressed)
 
-	deviceStopped := make(chan error, 1)
+	deviceErr := make(chan error, 1)
 	go func() {
-		deviceStopped <- c.device.Run(ctx)
+		deviceErr <- c.device.Run(ctx)
 	}()
 
 	ticks := c.clock.Tick()
 
 	refreshController := time.NewTicker(controllerRefreshRate)
+	defer refreshController.Stop()
 	refreshPublish := time.NewTicker(publishRefreshRate)
+	defer refreshPublish.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 
-		case err := <-deviceStopped:
+		case err := <-deviceErr:
 			return fmt.Errorf("device stopped running with error: %w", err)
 
 		case tick := <-ticks:
@@ -176,7 +179,6 @@ func (c *Controller) Run(ctx context.Context) error {
 		case <-refreshPublish.C:
 			go c.publishActivePattern()
 		}
-
 	}
 }
 
@@ -417,7 +419,8 @@ func (c *Controller) setPickedColor(color mikro.Color) {
 }
 
 func (c *Controller) publishActivePattern() error {
-	if _, err := c.conn.Write(c.currentPattern().Encode()); err != nil {
+	_, err := c.conn.Write(c.currentPattern().Encode())
+	if err != nil {
 		return fmt.Errorf("could not write active pattern to udp conn: %w", err)
 	}
 

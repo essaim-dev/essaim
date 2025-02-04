@@ -20,7 +20,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&addrFlag, "addr", "224.76.78.75:20809", "ip address and port used to send instructions")
+	flag.StringVar(&addrFlag, "addr", "224.2.2.3:9999", "ip address and port used to send instructions")
 }
 
 func main() {
@@ -45,7 +45,7 @@ func main() {
 	clientStopped := make(chan error, 1)
 	go func() {
 		if err := c.Run(context.Background()); err != nil {
-			clientStopped <- fmt.Errorf("could not start mikro controller: %s", err)
+			clientStopped <- fmt.Errorf("could not start client: %s", err)
 		}
 	}()
 
