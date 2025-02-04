@@ -101,6 +101,8 @@ func (c *Client) consumeConn(stopped chan error) {
 func (c *Client) render(col color.Color) {
 	rgbaCol, _ := color.RGBAModel.Convert(col).(color.RGBA)
 
+	fmt.Println("col:", rgbaCol)
+
 	c.dmxDevice.SetChannel(1, rgbaCol.R)
 	c.dmxDevice.SetChannel(2, rgbaCol.G)
 	c.dmxDevice.SetChannel(3, rgbaCol.B)

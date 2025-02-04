@@ -19,7 +19,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&addrFlag, "addr", "224.76.78.75:20809", "ip address and port used to send instructions")
+	flag.StringVar(&addrFlag, "addr", "224.2.2.3:9999", "ip address and port used to send instructions")
 }
 
 func main() {
