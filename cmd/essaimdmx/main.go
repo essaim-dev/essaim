@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/netip"
 
 	"essaim.dev/essaim/clock"
@@ -12,10 +13,12 @@ import (
 )
 
 var (
-	addrFlag string
+	interfaceFlag string
+	addrFlag      string
 )
 
 func init() {
+	flag.StringVar(&interfaceFlag, "interface", "eth0", "")
 	flag.StringVar(&addrFlag, "addr", "224.2.2.3:9999", "ip address and port used to send instructions")
 }
 
@@ -33,10 +36,15 @@ func run() error {
 		log.Fatalf("could not not parse ip address: %s", err)
 	}
 
+	iface, err := net.InterfaceByName(interfaceFlag)
+	if err != nil {
+		log.Fatalf("could not not find interface with given name: %s", err)
+	}
+
 	linkClock := clock.NewLinkClock(120.0)
 	defer linkClock.Close()
 
-	c, err := dmxclient.New(linkClock, 16, addr)
+	c, err := dmxclient.New(linkClock, 16, iface, addr)
 	if err != nil {
 		return fmt.Errorf("could not start dmx client: %w", err)
 	}
