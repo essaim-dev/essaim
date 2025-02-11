@@ -100,12 +100,13 @@ func (m *RGBA) BpProcessInt(di *bp.DataIndexer) {
 
 type Pattern struct {
 	Steps [16]RGBA `json:"steps"` // 512bit
+	Channel uint64 `json:"channel"` // 64bit
 }
 
 // Number of bytes to serialize struct Pattern
-const BYTES_LENGTH_PATTERN uint32 = 64
+const BYTES_LENGTH_PATTERN uint32 = 72
 
-func (m *Pattern) Size() uint32 { return 64 }
+func (m *Pattern) Size() uint32 { return 72 }
 
 // Returns string representation for struct Pattern.
 func (m *Pattern) String() string {
@@ -128,8 +129,9 @@ func (m *Pattern) Decode(s []byte) {
 func (m *Pattern) BpProcessor() bp.Processor {
 	fieldDescriptors := []*bp.MessageFieldProcessor{
 		bp.NewMessageFieldProcessor(1, bp.NewArray(false, 16, (&RGBA{}).BpProcessor())),
+		bp.NewMessageFieldProcessor(2, bp.NewUint(64)),
 	}
-	return bp.NewMessageProcessor(false, 512, fieldDescriptors)
+	return bp.NewMessageProcessor(false, 576, fieldDescriptors)
 }
 
 func (m *Pattern) BpGetAccessor(di *bp.DataIndexer) bp.Accessor {
@@ -143,6 +145,8 @@ func (m *Pattern) BpGetAccessor(di *bp.DataIndexer) bp.Accessor {
 
 func (m *Pattern) BpSetByte(di *bp.DataIndexer, lshift int, b byte) {
 	switch di.F() {
+		case 2:
+			m.Channel |= (uint64(b) << lshift)
 		default:
 			return
 	}
@@ -150,6 +154,8 @@ func (m *Pattern) BpSetByte(di *bp.DataIndexer, lshift int, b byte) {
 
 func (m *Pattern) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 	switch di.F() {
+		case 2:
+			return byte(m.Channel >> rshift)
 		default:
 			return byte(0) // Won't reached
 	}

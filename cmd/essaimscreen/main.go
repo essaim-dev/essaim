@@ -16,11 +16,13 @@ import (
 )
 
 var (
-	addrFlag string
+	addrFlag    string
+	channelFlag uint64
 )
 
 func init() {
 	flag.StringVar(&addrFlag, "addr", "224.2.2.3:9999", "ip address and port used to send instructions")
+	flag.Uint64Var(&channelFlag, "channel", 0, "")
 }
 
 func main() {
@@ -34,7 +36,7 @@ func main() {
 	linkClock := clock.NewLinkClock(120.0)
 	defer linkClock.Close()
 
-	c, err := client.New(linkClock, 16, addr, render)
+	c, err := client.New(linkClock, 16, addr, render, channelFlag)
 	if err != nil {
 		log.Fatalf("could not create mikro controller: %s", err)
 	}

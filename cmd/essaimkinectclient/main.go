@@ -16,11 +16,14 @@ import (
 var (
 	addrFlag       string
 	streamAddrFlag string
+	channelFlag    uint64
 )
 
 func init() {
 	flag.StringVar(&addrFlag, "addr", "224.76.78.75:20809", "ip address and port used to send instructions")
 	flag.StringVar(&streamAddrFlag, "stream-addr", "224.76.78.75:20810", "ip address and port used to send instructions")
+	flag.Uint64Var(&channelFlag, "channel", 0, "")
+
 }
 
 func main() {
@@ -34,7 +37,7 @@ func main() {
 	linkClock := clock.NewLinkClock(120.0)
 	defer linkClock.Close()
 
-	c, err := client.New(linkClock, 16, netip.MustParseAddrPort(addrFlag), k.RenderImage)
+	c, err := client.New(linkClock, 16, netip.MustParseAddrPort(addrFlag), k.RenderImage, channelFlag)
 	if err != nil {
 		log.Fatalf("could not create mikro controller: %s", err)
 	}

@@ -54,11 +54,14 @@ func (p *ColorPattern) SetColorAt(step int, c color.RGBA) bool {
 	return true
 }
 
-func (p *ColorPattern) Encode() []byte {
+func (p *ColorPattern) Encode(ch uint64) []byte {
 	p.stepsMu.RLock()
 	defer p.stepsMu.RUnlock()
 
-	message := essaimbp.Pattern{}
+	message := essaimbp.Pattern{
+		Channel: ch,
+	}
+
 	for idx, stepColor := range p.steps {
 		message.Steps[idx] = essaimbp.RGBA{
 			R: stepColor.R,
@@ -71,9 +74,13 @@ func (p *ColorPattern) Encode() []byte {
 	return message.Encode()
 }
 
-func (p *ColorPattern) Decode(b []byte) {
+func (p *ColorPattern) Decode(b []byte, ch uint64) {
 	message := essaimbp.Pattern{}
 	message.Decode(b)
+
+	if message.Channel != 0 && message.Channel != ch {
+		return
+	}
 
 	p.stepsMu.RLock()
 	defer p.stepsMu.RUnlock()

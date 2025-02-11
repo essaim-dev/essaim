@@ -3,6 +3,7 @@ package mikrocontroller
 import (
 	"context"
 	"fmt"
+	"image"
 	"image/color"
 	"net"
 	"net/netip"
@@ -13,10 +14,14 @@ import (
 	"essaim.dev/essaim/clock"
 	"essaim.dev/essaim/pattern"
 	"essaim.dev/mikro"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/basicfont"
+	"golang.org/x/image/math/fixed"
 )
 
 const (
 	patternsCount = 16
+	channelsCount = 4
 
 	controllerRefreshRate = time.Duration(time.Millisecond * 50)
 	publishRefreshRate    = time.Duration(time.Second)
@@ -96,8 +101,9 @@ type Controller struct {
 	clock  clock.Clock
 	conn   *net.UDPConn
 
-	patterns      []*pattern.ColorPattern
-	activePattern atomic.Int32
+	activeChannel   atomic.Uint64
+	patternChannels [][]*pattern.ColorPattern
+	activePattern   atomic.Int32
 
 	mode   PadMode
 	modeMu sync.RWMutex
@@ -112,11 +118,6 @@ type Controller struct {
 }
 
 func NewController(clock clock.Clock, stepCount int, addr netip.AddrPort) (*Controller, error) {
-	patterns := make([]*pattern.ColorPattern, patternsCount)
-	for idx := range patterns {
-		patterns[idx] = pattern.NewColorPattern(stepCount)
-	}
-
 	dev, err := mikro.OpenMk3()
 	if err != nil {
 		return nil, fmt.Errorf("could not open mikro device: %w", err)
@@ -128,17 +129,27 @@ func NewController(clock clock.Clock, stepCount int, addr netip.AddrPort) (*Cont
 	}
 	conn.SetReadBuffer(512)
 
-	return &Controller{
-		clock:         clock,
-		device:        dev,
-		conn:          conn,
-		patterns:      patterns,
-		mode:          PadModeColor,
-		activePattern: atomic.Int32{},
-		currentStep:   atomic.Int32{},
-		picked:        mikro.ColorWhite,
-		livePressed:   make(map[mikro.Pad]uint16, 16),
-	}, nil
+	c := &Controller{
+		clock:           clock,
+		device:          dev,
+		conn:            conn,
+		activeChannel:   atomic.Uint64{},
+		patternChannels: make([][]*pattern.ColorPattern, channelsCount),
+		mode:            PadModeColor,
+		activePattern:   atomic.Int32{},
+		currentStep:     atomic.Int32{},
+		picked:          mikro.ColorWhite,
+		livePressed:     make(map[mikro.Pad]uint16, 16),
+	}
+
+	for idx := range c.patternChannels {
+		c.patternChannels[idx] = make([]*pattern.ColorPattern, patternsCount)
+		for patternIdx := range c.patternChannels[idx] {
+			c.patternChannels[idx][patternIdx] = pattern.NewColorPattern(stepCount)
+		}
+	}
+
+	return c, nil
 }
 
 func (c *Controller) Close() error {
@@ -162,6 +173,8 @@ func (c *Controller) Run(ctx context.Context) error {
 	refreshPublish := time.NewTicker(publishRefreshRate)
 	defer refreshPublish.Stop()
 
+	c.updateScreen()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -177,7 +190,9 @@ func (c *Controller) Run(ctx context.Context) error {
 			c.renderController()
 
 		case <-refreshPublish.C:
-			go c.publishActivePattern()
+			if c.activeChannel.Load() == 0 {
+				go c.publishActivePattern()
+			}
 		}
 	}
 }
@@ -220,6 +235,9 @@ func (c *Controller) setButtonLights(lights *mikro.Lights) {
 
 		lights.Buttons[idx] = i
 	}
+
+	lights.Buttons[mikro.ButtonArrowRight] = mikro.IntensityMedium
+	lights.Buttons[mikro.ButtonArrowLeft] = mikro.IntensityMedium
 }
 
 func (c *Controller) onPadPressed(msg mikro.PadMessage) {
@@ -256,7 +274,7 @@ func (c *Controller) onPadPressedInStepMode(msg mikro.PadMessage) {
 		return
 	}
 
-	pattern := c.patterns[c.activePattern.Load()]
+	pattern := c.patternChannels[c.activeChannel.Load()][c.activePattern.Load()]
 
 	patternColor, _ := pattern.ColorAt(int(msg.Pad()))
 	padColor := mikro.Color(padPalette.Index(patternColor))
@@ -297,7 +315,27 @@ func (c *Controller) onButtonPressed(msg mikro.ButtonMessage) {
 			c.setPadMode(PadModePattern)
 		case mikro.ButtonKeyboard:
 			c.setPadMode(PadModeLive)
+		case mikro.ButtonArrowRight:
+			c.incrementActiveChannel()
+			go c.updateScreen()
+		case mikro.ButtonArrowLeft:
+			c.decrementActiveChannel()
+			go c.updateScreen()
 		}
+	}
+}
+
+func (c *Controller) incrementActiveChannel() {
+	ch := c.activeChannel.Load()
+	if (ch + 1) < channelsCount {
+		c.activeChannel.Store(ch + 1)
+	}
+}
+
+func (c *Controller) decrementActiveChannel() {
+	ch := c.activeChannel.Load()
+	if ch > 0 {
+		c.activeChannel.Store(ch - 1)
 	}
 }
 
@@ -335,7 +373,7 @@ func (c *Controller) renderColorModePads(lights *mikro.Lights) {
 }
 
 func (c *Controller) renderStepModePads(lights *mikro.Lights) {
-	pattern := c.patterns[c.activePattern.Load()]
+	pattern := c.patternChannels[c.activeChannel.Load()][c.activePattern.Load()]
 
 	for idx := range lights.Pads {
 		level := mikro.ColorLevelHigh
@@ -367,7 +405,7 @@ func (c *Controller) renderPatternModePads(lights *mikro.Lights) {
 			level = mikro.ColorLevelFaded
 		}
 
-		p := c.patterns[idx]
+		p := c.patternChannels[c.activeChannel.Load()][idx]
 
 		patternColor, _ := p.ColorAt(int(step))
 		padColor := mikro.Color(padPalette.Index(patternColor))
@@ -419,7 +457,9 @@ func (c *Controller) setPickedColor(color mikro.Color) {
 }
 
 func (c *Controller) publishActivePattern() error {
-	_, err := c.conn.Write(c.currentPattern().Encode())
+	fmt.Println("write go")
+	_, err := c.conn.Write(c.currentPattern().Encode(c.activeChannel.Load()))
+	fmt.Println("write done")
 	if err != nil {
 		return fmt.Errorf("could not write active pattern to udp conn: %w", err)
 	}
@@ -432,7 +472,7 @@ func (c *Controller) currentPattern() *pattern.ColorPattern {
 	case PadModeLive:
 		return c.livePattern()
 	default:
-		return c.patterns[c.activePattern.Load()]
+		return c.patternChannels[c.activeChannel.Load()][c.activePattern.Load()]
 	}
 }
 
@@ -456,6 +496,24 @@ func (c *Controller) livePattern() *pattern.ColorPattern {
 	}
 
 	return p
+}
+
+func (c *Controller) updateScreen() {
+	deviceImage := image.NewGray(image.Rect(0, 0, 128, 32))
+	point := fixed.Point26_6{
+		X: fixed.I(10),
+		Y: fixed.I(10),
+	}
+	fontDrawer := &font.Drawer{
+		Dst:  deviceImage,
+		Src:  image.White,
+		Face: basicfont.Face7x13,
+		Dot:  point,
+	}
+	fontDrawer.DrawString(fmt.Sprintf("chan: %d", c.activeChannel.Load()))
+	if err := c.device.SetScreen(deviceImage); err != nil {
+		fmt.Printf("could not update device screen: %s\n", err)
+	}
 }
 
 func scaleVelocityToUint8(value uint16) uint8 {

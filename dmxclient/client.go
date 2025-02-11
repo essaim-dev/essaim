@@ -29,9 +29,11 @@ type Client struct {
 	currentStep atomic.Int32
 
 	dmxDevice *dmx.Device
+
+	channel uint64
 }
 
-func New(clock clock.Clock, stepCount int, iface *net.Interface, addr netip.AddrPort) (*Client, error) {
+func New(clock clock.Clock, stepCount int, iface *net.Interface, addr netip.AddrPort, channel uint64) (*Client, error) {
 	conn, err := net.ListenMulticastUDP("udp4", iface, net.UDPAddrFromAddrPort(addr))
 	if err != nil {
 		return nil, fmt.Errorf("could not listen on multicast address: %w", err)
@@ -48,6 +50,7 @@ func New(clock clock.Clock, stepCount int, iface *net.Interface, addr netip.Addr
 		conn:      conn,
 		pattern:   pattern.NewColorPattern(stepCount),
 		dmxDevice: dev,
+		channel:   channel,
 	}, nil
 }
 
@@ -93,7 +96,7 @@ func (c *Client) consumeConn(stopped chan error) {
 		}
 
 		c.patternMu.Lock()
-		c.pattern.Decode(b[:n])
+		c.pattern.Decode(b[:n], c.channel)
 		c.patternMu.Unlock()
 	}
 }

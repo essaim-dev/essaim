@@ -11,4 +11,5 @@ message RGBA {
 
 message Pattern {
     RGBA[16] steps = 1
+    uint64 channel = 2
 }

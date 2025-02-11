@@ -15,11 +15,13 @@ import (
 var (
 	interfaceFlag string
 	addrFlag      string
+	channelFlag   uint64
 )
 
 func init() {
 	flag.StringVar(&interfaceFlag, "interface", "eth0", "")
 	flag.StringVar(&addrFlag, "addr", "224.2.2.3:9999", "ip address and port used to send instructions")
+	flag.Uint64Var(&channelFlag, "channel", 0, "")
 }
 
 func main() {
@@ -44,7 +46,7 @@ func run() error {
 	linkClock := clock.NewLinkClock(120.0)
 	defer linkClock.Close()
 
-	c, err := dmxclient.New(linkClock, 16, iface, addr)
+	c, err := dmxclient.New(linkClock, 16, iface, addr, channelFlag)
 	if err != nil {
 		return fmt.Errorf("could not start dmx client: %w", err)
 	}

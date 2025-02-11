@@ -78,7 +78,8 @@ func (c *Client) RenderImage(col color.Color) *image.RGBA {
 	img := ConvertBitsToRGBA(c.binaryImage, 640, col)
 	c.binaryImageMu.RUnlock()
 
-	return flipVertical(img)
+	// return flipVertical(img)
+	return img
 }
 
 func binaryImageToRGBA(binaryImage []byte, col color.Color) []byte {

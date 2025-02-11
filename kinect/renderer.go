@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/draw"
 	"log"
 	"sync"
+	"time"
 
 	"essaim.dev/essaim/freenect"
 )
@@ -66,10 +66,10 @@ func (r *Renderer) Run(ctx context.Context) error {
 	r.device.SetVideoCallback(r.videoFunc)
 	r.device.SetDepthCallback(r.depthFunc)
 
-	if err := r.device.StartVideoStream(freenect.ResolutionMedium, freenect.VideoFormatRGB); err != nil {
-		return fmt.Errorf("could not start video stream: %w", err)
-	}
-	defer r.device.StopVideoStream()
+	// if err := r.device.StartVideoStream(freenect.ResolutionMedium, freenect.VideoFormatRGB); err != nil {
+	// 	return fmt.Errorf("could not start video stream: %w", err)
+	// }
+	// defer r.device.StopVideoStream()
 
 	if err := r.device.StartDepthStream(freenect.ResolutionMedium, freenect.DepthFormatMM); err != nil {
 		return fmt.Errorf("could not start video stream: %w", err)
@@ -81,8 +81,9 @@ func (r *Renderer) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		default:
-			if err := r.fctx.ProcessEvents(0); err != nil {
-				return fmt.Errorf("could not process events: %w", err)
+			if err := r.fctx.ProcessEvents(time.Second); err != nil {
+				fmt.Println("event error:", err)
+				// return fmt.Errorf("could not process events: %w", err)
 			}
 		}
 
@@ -90,20 +91,20 @@ func (r *Renderer) Run(ctx context.Context) error {
 }
 
 func (r *Renderer) RenderImage(c color.Color) *image.RGBA {
-	img := image.NewRGBA(image.Rect(0, 0, 640, 480))
-
-	r.videoMu.RLock()
-	copy(img.Pix, rgbToRGBA(r.video))
-	r.videoMu.RUnlock()
+	// img := image.NewRGBA(image.Rect(0, 0, 640, 480))
+	// r.videoMu.RLock()
+	// copy(img.Pix, rgbToRGBA(r.video))
+	// r.videoMu.RUnlock()
 
 	depthImg := image.NewRGBA(image.Rect(0, 0, 640, 480))
 	r.depthMu.RLock()
 	copy(depthImg.Pix, depthToRGBA(r.depth, c))
 	r.depthMu.RUnlock()
 
-	draw.Draw(img, depthImg.Bounds(), depthImg, image.Point{}, draw.Over)
+	// draw.Draw(img, depthImg.Bounds(), depthImg, image.Point{}, draw.Over)
 
-	return flipVertical(depthImg)
+	// return flipVertical(depthImg)
+	return depthImg
 }
 
 func rgbToRGBA(rgb []byte) []byte {

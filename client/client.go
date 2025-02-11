@@ -37,9 +37,17 @@ type Client struct {
 	refreshImage chan *image.RGBA
 
 	renderFunc func(color.Color) *image.RGBA
+
+	channel uint64
 }
 
-func New(clock clock.Clock, stepCount int, addr netip.AddrPort, renderFunc func(color.Color) *image.RGBA) (*Client, error) {
+func New(
+	clock clock.Clock,
+	stepCount int,
+	addr netip.AddrPort,
+	renderFunc func(color.Color) *image.RGBA,
+	channel uint64,
+) (*Client, error) {
 	conn, err := net.ListenMulticastUDP("udp4", nil, net.UDPAddrFromAddrPort(addr))
 	if err != nil {
 		return nil, fmt.Errorf("could not listen on multicast address: %w", err)
@@ -53,6 +61,7 @@ func New(clock clock.Clock, stepCount int, addr netip.AddrPort, renderFunc func(
 		stopped:      make(chan error, 1),
 		refreshImage: make(chan *image.RGBA),
 		renderFunc:   renderFunc,
+		channel:      channel,
 	}, nil
 }
 
@@ -97,14 +106,16 @@ func (c *Client) consumeConn(stopped chan error) {
 
 	for {
 		n, err := c.conn.Read(b)
+		fmt.Println("read received")
 		if err != nil {
 			stopped <- fmt.Errorf("error while reading from udp: %w", err)
 			return
 		}
 
 		c.patternMu.Lock()
-		c.pattern.Decode(b[:n])
+		c.pattern.Decode(b[:n], c.channel)
 		c.patternMu.Unlock()
+
 	}
 }
 
