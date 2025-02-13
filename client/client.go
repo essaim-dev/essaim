@@ -47,8 +47,9 @@ func New(
 	addr netip.AddrPort,
 	renderFunc func(color.Color) *image.RGBA,
 	channel uint64,
+	iface *net.Interface,
 ) (*Client, error) {
-	conn, err := net.ListenMulticastUDP("udp4", nil, net.UDPAddrFromAddrPort(addr))
+	conn, err := net.ListenMulticastUDP("udp4", iface, net.UDPAddrFromAddrPort(addr))
 	if err != nil {
 		return nil, fmt.Errorf("could not listen on multicast address: %w", err)
 	}
@@ -106,7 +107,6 @@ func (c *Client) consumeConn(stopped chan error) {
 
 	for {
 		n, err := c.conn.Read(b)
-		fmt.Println("read received")
 		if err != nil {
 			stopped <- fmt.Errorf("error while reading from udp: %w", err)
 			return

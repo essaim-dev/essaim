@@ -41,7 +41,7 @@ func main() {
 	linkClock := clock.NewLinkClock(120.0)
 	defer linkClock.Close()
 
-	c, err := client.New(linkClock, 16, addr, k.RenderImage, channelFlag)
+	c, err := client.New(linkClock, 16, addr, k.RenderImage, channelFlag, nil)
 	if err != nil {
 		log.Fatalf("could not create mikro controller: %s", err)
 	}

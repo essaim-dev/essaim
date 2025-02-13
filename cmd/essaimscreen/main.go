@@ -8,6 +8,7 @@ import (
 	"image/color"
 	"image/draw"
 	"log"
+	"net"
 	"net/netip"
 
 	"essaim.dev/essaim/client"
@@ -17,16 +18,28 @@ import (
 
 var (
 	addrFlag    string
+	ifaceFlag   string
 	channelFlag uint64
 )
 
 func init() {
 	flag.StringVar(&addrFlag, "addr", "224.2.2.3:9999", "ip address and port used to send instructions")
+	flag.StringVar(&ifaceFlag, "interface", "en0", "")
 	flag.Uint64Var(&channelFlag, "channel", 0, "")
 }
 
 func main() {
 	flag.Parse()
+
+	var iface *net.Interface
+	var err error
+
+	if ifaceFlag != "" {
+		iface, err = net.InterfaceByName(ifaceFlag)
+		if err != nil {
+			log.Fatalf("could not not parse interface: %s", err)
+		}
+	}
 
 	addr, err := netip.ParseAddrPort(addrFlag)
 	if err != nil {
@@ -36,7 +49,7 @@ func main() {
 	linkClock := clock.NewLinkClock(120.0)
 	defer linkClock.Close()
 
-	c, err := client.New(linkClock, 16, addr, render, channelFlag)
+	c, err := client.New(linkClock, 16, addr, render, channelFlag, iface)
 	if err != nil {
 		log.Fatalf("could not create mikro controller: %s", err)
 	}

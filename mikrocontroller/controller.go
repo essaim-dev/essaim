@@ -457,9 +457,7 @@ func (c *Controller) setPickedColor(color mikro.Color) {
 }
 
 func (c *Controller) publishActivePattern() error {
-	fmt.Println("write go")
 	_, err := c.conn.Write(c.currentPattern().Encode(c.activeChannel.Load()))
-	fmt.Println("write done")
 	if err != nil {
 		return fmt.Errorf("could not write active pattern to udp conn: %w", err)
 	}
