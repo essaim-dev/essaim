@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/netip"
 
 	"essaim.dev/essaim/client"
@@ -15,12 +16,14 @@ import (
 
 var (
 	addrFlag       string
+	ifaceFlag      string
 	streamAddrFlag string
 	channelFlag    uint64
 )
 
 func init() {
 	flag.StringVar(&addrFlag, "addr", "224.76.78.75:20809", "ip address and port used to send instructions")
+	flag.StringVar(&ifaceFlag, "interface", "", "")
 	flag.StringVar(&streamAddrFlag, "stream-addr", "224.76.78.75:20810", "ip address and port used to send instructions")
 	flag.Uint64Var(&channelFlag, "channel", 0, "")
 
@@ -28,6 +31,16 @@ func init() {
 
 func main() {
 	flag.Parse()
+
+	var iface *net.Interface
+	var err error
+
+	if ifaceFlag != "" {
+		iface, err = net.InterfaceByName(ifaceFlag)
+		if err != nil {
+			log.Fatalf("could not not parse interface: %s", err)
+		}
+	}
 
 	k, err := depthstream.NewClient(netip.MustParseAddrPort(streamAddrFlag))
 	if err != nil {
@@ -37,7 +50,7 @@ func main() {
 	linkClock := clock.NewLinkClock(120.0)
 	defer linkClock.Close()
 
-	c, err := client.New(linkClock, 16, netip.MustParseAddrPort(addrFlag), k.RenderImage, channelFlag)
+	c, err := client.New(linkClock, 16, netip.MustParseAddrPort(addrFlag), k.RenderImage, channelFlag, iface)
 	if err != nil {
 		log.Fatalf("could not create mikro controller: %s", err)
 	}

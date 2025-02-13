@@ -24,7 +24,7 @@ var (
 
 func init() {
 	flag.StringVar(&addrFlag, "addr", "224.2.2.3:9999", "ip address and port used to send instructions")
-	flag.StringVar(&ifaceFlag, "interface", "en0", "")
+	flag.StringVar(&ifaceFlag, "interface", "", "")
 	flag.Uint64Var(&channelFlag, "channel", 0, "")
 }
 
